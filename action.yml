@@ -9,7 +9,7 @@ runs:
         version=0.2
         wget -qO rlottie.tar.gz "https://github.com/Samsung/rlottie/archive/refs/tags/v$version.tar.gz"
         wget -qO 0001-add-missing-include.patch "https://aur.archlinux.org/cgit/aur.git/plain/0001-add-missing-include.patch?h=rlottie"
-        sha256sums --check <<EOF
+        sha256sum --check <<EOF
         030ccbc270f144b4f3519fb3b86e20dd79fb48d5d55e57f950f12bab9b65216a  rlottie.tar.gz
         6dd2d214beecf74347102b0f4481cfc3a4faa5d8a8ac19d4d03a1ddfd0744d00  0001-add-missing-include.patch
         EOF
