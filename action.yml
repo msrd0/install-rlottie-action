@@ -10,7 +10,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - shell: {{inputs.shell}}
+    - shell: ${{inputs.shell}}
       run: |
         version=0.2
         wget -qO rlottie.tar.gz "https://github.com/Samsung/rlottie/archive/refs/tags/v$version.tar.gz"
