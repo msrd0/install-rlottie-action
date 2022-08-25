@@ -1,10 +1,16 @@
 name: 'Install rlottie'
 description: 'Installs the rlottie library'
 
+inputs:
+  toolchain:
+    description: The shell to run the build-script with. Should be ash-compatible.
+    required: false
+    default: bash
+
 runs:
   using: "composite"
   steps:
-    - shell: bash
+    - shell: {{inputs.shell}}
       run: |
         version=0.2
         wget -qO rlottie.tar.gz "https://github.com/Samsung/rlottie/archive/refs/tags/v$version.tar.gz"
