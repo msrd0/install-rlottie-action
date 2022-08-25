@@ -2,7 +2,7 @@ name: 'Install rlottie'
 description: 'Installs the rlottie library'
 
 inputs:
-  toolchain:
+  shell:
     description: The shell to run the build-script with. Should be ash-compatible.
     required: false
     default: bash
