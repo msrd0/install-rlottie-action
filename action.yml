@@ -29,7 +29,9 @@ runs:
       run: |
         # some defaults
         samsung_default_version=0.2
+        samsung_patch_commit=2d7b1fa2b005bba3d4b45e8ebfa632060e8a157a
         telegram_default_commit=67f103bc8b625f2a4a9e94f1d8c7bd84c5a08d1d
+        telegram_patch_commit=1dd47cec7eb8e1f657f02dce9c497ae60f7cf8c5
 
         # ensure we don't get into any conflicts on the file system
         pwd="$(realpath .)"
@@ -53,9 +55,13 @@ runs:
         fi
         
         # rlottie needs patch for newer compilers
-        wget https://github.com/Samsung/rlottie/commit/2d7b1fa2b005bba3d4b45e8ebfa632060e8a157a.patch
-        patch -N -p1 -i 2d7b1fa2b005bba3d4b45e8ebfa632060e8a157a.patch || true
-        rm 2d7b1fa2b005bba3d4b45e8ebfa632060e8a157a.patch
+        if [ "${{inputs.vendor}}" == "Samsung" ]; then
+          wget -qO patch "https://github.com/Samsung/rlottie/commit/$samsung_patch_commit.patch"
+        else
+          wget -qO patch "https://github.com/TelegramMessenger/rlottie/commit/$telegram_patch_commit.patch"
+        fi
+        patch -N -p1 -i patch || true
+        rm patch
 
         # telegram uses stupid compiler flags
         if [ "${{inputs.vendor}}" == "TelegramMessenger" ]; then
