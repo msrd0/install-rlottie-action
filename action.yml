@@ -24,7 +24,8 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - shell: ${{inputs.shell}}
+    - name: Install rlottie
+      shell: ${{inputs.shell}}
       run: |
         # some defaults
         samsung_default_version=0.2
@@ -33,13 +34,15 @@ runs:
 
         # ensure we don't get into any conflicts on the file system
         pwd="$(realpath .)"
-        basedir="${HOME:/tmp}"
+        basedir="${HOME:-/tmp}"
         slug="msrd0/install-rlottie-action"
         cd "$basedir"
         mkdir -p "$slug"
         cd "$slug"
         
+        # clone source code
         git clone "https://github.com/${{inputs.vendor}}/rlottie"
+        cd rlottie
         if [ -n "${{inputs.version}}" ]; then
           git checkout "v${{inputs.version}}"
         elif [ -n "${{inputs.tag}}" ]; then
@@ -56,7 +59,7 @@ runs:
           git cherry-pick "$samsung_patch_commit"
         fi
         
-        cd rlottie
+        # build and install source code
         mkdir -p build
         cd build
         cmake .. \
