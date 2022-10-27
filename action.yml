@@ -42,8 +42,6 @@ runs:
         # clone source code
         git clone "https://github.com/${{inputs.vendor}}/rlottie"
         cd rlottie
-        git config user.email "noreply@example.org"
-        git config user.name "nobody"
         if [ -n "${{inputs.version}}" ]; then
           git checkout "v${{inputs.version}}"
         elif [ -n "${{inputs.tag}}" ]; then
@@ -53,7 +51,11 @@ runs:
         else
           git checkout "$telegram_default_commit"
         fi
-        git checkout -b "$slug"
+        
+        # rlottie needs patch for newer compilers
+        wget https://github.com/Samsung/rlottie/commit/2d7b1fa2b005bba3d4b45e8ebfa632060e8a157a.patch
+        patch -N -p1 -i 2d7b1fa2b005bba3d4b45e8ebfa632060e8a157a.patch || true
+        rm 2d7b1fa2b005bba3d4b45e8ebfa632060e8a157a.patch
 
         # telegram uses stupid compiler flags
         if [ "${{inputs.vendor}}" == "TelegramMessenger" ]; then
@@ -64,8 +66,6 @@ runs:
         mkdir -p build
         cd build
         cmake .. \
-          -DCMAKE_C_COMPILER=clang-12 \
-          -DCMAKE_CXX_COMPILER=clang++-12 \
           -DCMAKE_INSTALL_PREFIX=/usr \
           -DCMAKE_BUILD_TYPE=Release
         make -j2
