@@ -6,23 +6,69 @@ inputs:
     description: The shell to run the build-script with. Should be ash-compatible.
     required: false
     default: bash
+  vendor:
+    type: choice
+    description: The vendor (GitHub organization) of the rlottie library.
+    required: false
+    options:
+      - Samsung
+      - TelegramMessenger
+    default: Samsung
+  version:
+    description: The version of the rlottie library.
+    required: false
+  commit:
+    description: The git commit of the rlottie library.
+    required: false
 
 runs:
   using: "composite"
   steps:
-    - shell: ${{inputs.shell}}
+    - name: Install rlottie
+      shell: ${{inputs.shell}}
       run: |
-        version=0.2
-        wget -qO rlottie.tar.gz "https://github.com/Samsung/rlottie/archive/refs/tags/v$version.tar.gz"
-        wget -qO 0001-add-missing-include.patch "https://aur.archlinux.org/cgit/aur.git/plain/0001-add-missing-include.patch?h=rlottie"
-        sha256sum -c <<EOF
-        030ccbc270f144b4f3519fb3b86e20dd79fb48d5d55e57f950f12bab9b65216a  rlottie.tar.gz
-        6dd2d214beecf74347102b0f4481cfc3a4faa5d8a8ac19d4d03a1ddfd0744d00  0001-add-missing-include.patch
-        EOF
+        # some defaults
+        samsung_default_version=0.2
+        samsung_patch_commit=2d7b1fa2b005bba3d4b45e8ebfa632060e8a157a
+        telegram_default_commit=67f103bc8b625f2a4a9e94f1d8c7bd84c5a08d1d
+        telegram_patch_commit=1dd47cec7eb8e1f657f02dce9c497ae60f7cf8c5
+
+        # ensure we don't get into any conflicts on the file system
+        pwd="$(realpath .)"
+        basedir="${HOME:-/tmp}"
+        slug="msrd0/install-rlottie-action"
+        cd "$basedir"
+        mkdir -p "$slug"
+        cd "$slug"
         
-        tar xfz rlottie.tar.gz
-        cd rlottie-$version
-        patch -N -p 0 -i ../0001-add-missing-include.patch
+        # clone source code
+        git clone "https://github.com/${{inputs.vendor}}/rlottie"
+        cd rlottie
+        if [ -n "${{inputs.version}}" ]; then
+          git checkout "v${{inputs.version}}"
+        elif [ -n "${{inputs.tag}}" ]; then
+          git checkout "${{inputs.commit}}"
+        elif [ "${{inputs.vendor}}" == "Samsung" ]; then
+          git checkout "v$samsung_default_version"
+        else
+          git checkout "$telegram_default_commit"
+        fi
+        
+        # rlottie needs patch for newer compilers
+        if [ "${{inputs.vendor}}" == "Samsung" ]; then
+          wget -qO patch "https://github.com/Samsung/rlottie/commit/$samsung_patch_commit.patch"
+        else
+          wget -qO patch "https://github.com/TelegramMessenger/rlottie/commit/$telegram_patch_commit.patch"
+        fi
+        patch -N -p1 -i patch || true
+        rm patch
+
+        # telegram uses stupid compiler flags
+        if [ "${{inputs.vendor}}" == "TelegramMessenger" ]; then
+          sed -i -e 's,-Werror,,g' CMakeLists.txt
+        fi
+        
+        # build and install source code
         mkdir -p build
         cd build
         cmake .. \
@@ -30,5 +76,7 @@ runs:
           -DCMAKE_BUILD_TYPE=Release
         make -j2
         sudo make install
-        cd ../..
-        rm -r rlottie-$version rlottie.tar.gz 0001-add-missing-include.patch
+        
+        cd "$basedir"
+        rm -rf "$slug" || true
+        cd "$pwd"
