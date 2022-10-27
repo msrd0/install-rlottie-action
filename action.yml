@@ -43,6 +43,8 @@ runs:
         # clone source code
         git clone "https://github.com/${{inputs.vendor}}/rlottie"
         cd rlottie
+        git config user.email "noreply@example.org"
+        git config user.name "nobody"
         if [ -n "${{inputs.version}}" ]; then
           git checkout "v${{inputs.version}}"
         elif [ -n "${{inputs.tag}}" ]; then
