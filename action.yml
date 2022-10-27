@@ -62,6 +62,11 @@ runs:
             git cherry-pick "$samsung_patch_commit"
           fi
         fi
+
+        # telegram uses stupid compiler flags
+        if [ "${{inputs.vendor}}" == "TelegramMessenger" ]; then
+          sed -i -e 's,-Werror,,g' CMakeLists.txt
+        fi
         
         # build and install source code
         mkdir -p build
