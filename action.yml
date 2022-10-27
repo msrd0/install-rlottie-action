@@ -57,8 +57,10 @@ runs:
         git checkout -b "$slug"
         
         # samsung version might need to be patched
-        if ! git log --pretty=tformat:"%H" |grep "$samsung_patch_commit" >/dev/null; then
-          git cherry-pick "$samsung_patch_commit"
+        if [ "${{inputs.vendor}}" == "Samsung" ]; then
+          if ! git log --pretty=tformat:"%H" |grep "$samsung_patch_commit" >/dev/null; then
+            git cherry-pick "$samsung_patch_commit"
+          fi
         fi
         
         # build and install source code
