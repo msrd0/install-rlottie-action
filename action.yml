@@ -26,21 +26,34 @@ runs:
   steps:
     - shell: ${{inputs.shell}}
       run: |
+        # some defaults
+        samsung_default_version=0.2
+        samsung_patch_commit=2d7b1fa2b005bba3d4b45e8ebfa632060e8a157a
+        telegram_default_commit=67f103bc8b625f2a4a9e94f1d8c7bd84c5a08d1d
+
+        # ensure we don't get into any conflicts on the file system
+        pwd="$(realpath .)"
+        basedir="${HOME:/tmp}"
+        slug="msrd0/install-rlottie-action"
+        cd "$basedir"
+        mkdir -p "$slug"
+        cd "$slug"
+        
         git clone "https://github.com/${{inputs.vendor}}/rlottie"
         if [ -n "${{inputs.version}}" ]; then
           git checkout "v${{inputs.version}}"
         elif [ -n "${{inputs.tag}}" ]; then
           git checkout "${{inputs.commit}}"
         elif [ "${{inputs.vendor}}" == "Samsung" ]; then
-          git checkout v0.2
+          git checkout "v$samsung_default_version"
         else
-          git checkout 67f103bc8b625f2a4a9e94f1d8c7bd84c5a08d1d
+          git checkout "$telegram_default_commit"
         fi
-        git checkout -b msrd0/install-rlottie-action
+        git checkout -b "$slug"
         
         # samsung version might need to be patched
-        if ! git log --pretty=tformat:"%H" |grep 2d7b1fa2b005bba3d4b45e8ebfa632060e8a157a >/dev/null; then
-          git cherry-pick 2d7b1fa2b005bba3d4b45e8ebfa632060e8a157a
+        if ! git log --pretty=tformat:"%H" |grep "$samsung_patch_commit" >/dev/null; then
+          git cherry-pick "$samsung_patch_commit"
         fi
         
         cd rlottie
@@ -51,5 +64,7 @@ runs:
           -DCMAKE_BUILD_TYPE=Release
         make -j2
         sudo make install
-        cd ../..
-        rm -r rlottie
+        
+        cd "$basedir"
+        rm -rf "$slug" || true
+        cd "$pwd"
